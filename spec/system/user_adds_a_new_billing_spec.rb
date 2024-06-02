@@ -37,4 +37,43 @@ describe "User adds a new billing" do
     expect(page).to have_content 'Categoria: Marketing'
     expect(page).to have_link 'Editar'
   end
+
+  it "with missing params" do
+    visit new_billing_path
+
+    fill_in "Data de Emissão",	with: ""
+    fill_in "Data de Vencimento",	with: ""
+    fill_in "Identificação",	with: ""
+    fill_in "Valor",	with: ""
+    select "Operacional", from: "Categoria"
+    click_on 'Criar Duplicata'
+
+    expect(page).to have_content 'não pode ficar em branco', count: 4 
+
+  end
+  it "Emission date cannot be future" do
+    visit new_billing_path
+
+    fill_in "Data de Emissão",	with: "#{1.day.from_now}"
+    fill_in "Data de Vencimento",	with: "#{1.month.from_now}"
+    fill_in "Identificação",	with: "Fatura de Marketing"
+    fill_in "Valor",	with: "10050"
+    select "Marketing", from: "Categoria"
+    click_on 'Criar Duplicata'
+
+    expect(page).to have_content 'Data de Emissão não pode ser futura'
+  end
+
+  it "Expire date cannot be before Emission date" do
+    visit new_billing_path
+
+    fill_in "Data de Emissão",	with: "#{2.day.from_now}"
+    fill_in "Data de Vencimento",	with: "#{1.day.from_now}"
+    fill_in "Identificação",	with: "Fatura de Marketing"
+    fill_in "Valor",	with: "10050"
+    select "Marketing", from: "Categoria"
+    click_on 'Criar Duplicata'
+
+    expect(page).to have_content 'Data de Vencimento não pode ser anterior a Data de Emissão'
+  end
 end
