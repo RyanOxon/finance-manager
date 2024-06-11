@@ -51,6 +51,7 @@ describe "User adds a new billing" do
     expect(page).to have_content 'não pode ficar em branco', count: 4 
 
   end
+  
   it "Emission date cannot be future" do
     visit new_billing_path
 
@@ -75,5 +76,26 @@ describe "User adds a new billing" do
     click_on 'Criar Duplicata'
 
     expect(page).to have_content 'Data de Vencimento não pode ser anterior a Data de Emissão'
+  end
+
+  it "status expired if expire date is past" do
+    visit new_billing_path
+
+    fill_in "Data de Emissão",	with: "#{2.month.ago}"
+    fill_in "Data de Vencimento",	with: "#{1.month.ago}"
+    fill_in "Identificação",	with: "Fatura de Marketing"
+    fill_in "Valor",	with: "10050"
+    select "Marketing", from: "Categoria"
+    click_on 'Criar Duplicata'
+
+    expect(current_path).to eq billing_path(Billing.last)
+    expect(page).to have_content 'Fatura de Marketing'
+    expect(page).to have_content 'Status: Vencida'
+    expect(page).to have_content "Emissão: #{I18n.l(Billing.last.emission)}"
+    expect(page).to have_content "Vencimento: #{I18n.l(Billing.last.expire)}"
+    expect(page).to have_content 'Valor: R$ 100,50'
+    expect(page).to have_content 'Categoria: Marketing'
+    expect(page).to have_link 'Editar'
+
   end
 end

@@ -7,6 +7,9 @@ class Billing < ApplicationRecord
   enum status: {open: 0, expired: 1, paid: 2}
   enum category: {operational: 0, personnel:1, marketing: 2, product_buy: 3, others: 10} 
 
+  scope :expireds, -> { where(status: 'expired').order(:expire)}
+  scope :to_expire, -> { where(status: 'open').where('expire = ?', Date.today)}
+
   def humanized_status
     I18n.t("activerecord.attributes.billing.statuses.#{self.status}")
   end
@@ -15,7 +18,11 @@ class Billing < ApplicationRecord
     I18n.t("activerecord.attributes.billing.categories.#{category}")
   end
 
+  def expire_date_check
+    self.expired! if expire.present? && expire < Date.today
+  end
   protected
+
   def emission_cannot_be_future
     if emission.present? && emission > Date.today
       errors.add(:emission, "não pode ser futura")
